@@ -77,8 +77,9 @@ raggiungi_traguardo(NeoEnv,Final):-
 %muovi_eletto(_,_,_):-end_game(neo,target),!.	
 muovi_eletto(NeoEnv,Final,[[Primary_Direction|_]|Ranked_Alternative_Direction]):-
 	assert(direzione(neo, Primary_Direction)),
-	%ma_è_libera_la_cella(......),
-	%non_è_che_dopo_si_riempie(....). 
+	%ma_è_libera_la_cella(......),%
+	simulazione_sposta_light(NeoEnv,neo,Scenario,neo),%%SI INTERROMPE XKè NON RIESCE A UNIFICARE CON LO 0
+	%non_è_che_dopo_si_riempie(....).%muoviagentisinglestep(....) simulazione_sposta_light(NeoEnv,neo,MatrixUpdate,neo)
 	sposta(NeoEnv, neo, Final),
 	print_situation([neo], Final),
 	retract(direzione(neo,_)),!,
@@ -96,7 +97,9 @@ simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 	posizione_attuale(Matrix,Id,I,J),
 	nuova_posizione(I,J,Direction,Step,NewI,NewJ),
 	posizione_attuale(Matrix,InfoPosizione,NewI,NewJ),%write(Agente),
-	InfoPosizione='0', AgentedaInserire=Agente,
+	(InfoPosizione='0';
+	Agente=neo,InfoPosizione='T'),
+	AgentedaInserire=Agente,
 	%
 	%isPossibleAdvance(Upd,NewI,NewJ,AgentedaInserire),
 	change_value_matrix(Matrix,I,J,'0',Upd),
