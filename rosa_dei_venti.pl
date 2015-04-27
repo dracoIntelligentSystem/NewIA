@@ -18,12 +18,8 @@ direction_from_degree(202.6,247.5,225,'SO').
 direction_from_degree(247.6,292.5,270,'S').
 direction_from_degree(292.6,337.5,315,'SE').
 
-find_dir(Goniometric_Angle,Rank_Direction):-
-	%direction_from_degree(Alpha, Beta, _, Direction),
-	%between_floatValue(Alpha, Beta, Goniometric_Angle),!,
-	%bagof(Dir, direction_from_degree(_, _, _, Dir), Lista_dir),
+find_Sort_direction_List(Goniometric_Angle,Rank_Direction):-
 	find_alternative(Goniometric_Angle,['E','NE','N','NO','O','SO','S','SE'],AllDistanceDirection),
-	%writeln(AllDistanceDirection),
 	predsort(compareDistances, AllDistanceDirection, Rank_Direction).
 	
 between_floatValue(MinValue,MaxValue,Value):-
@@ -35,5 +31,11 @@ compareDistances(X,[_,Distance1],[_,Distance2]):-compare(X,Distance1,Distance2).
 find_alternative(_,[],[]):-!.
 find_alternative(Goniometric_Angle,[Direction|Other_Direction],[[Direction,Distance]|Other_data]):-
 	direction_from_degree(_,_,AngleCardinalDirection,Direction),
-	Distance is abs(Goniometric_Angle-AngleCardinalDirection),
+	DistanceBeta is abs(Goniometric_Angle-AngleCardinalDirection),
+	distance2add(DistanceBeta,Distance),!,
 	find_alternative(Goniometric_Angle,Other_Direction,Other_data).
+	
+distance2add(DistanceBeta,Distance):-
+	DistanceBeta >180,
+	Distance is 360 - DistanceBeta;
+	Distance is DistanceBeta.

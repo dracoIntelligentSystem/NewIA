@@ -49,9 +49,9 @@ insert_theOneAndTarget(Matrix,Filled):-
 	id(target,IdTarget),
 	coord_goal(target, X_goal, Y_goal),
 	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled),%.
-	find_direction(Neo,Target).%in che direzione deve andare Neo.
-	
-find_direction(Neo,Target):-
+	find_direction(Neo,target,Rank_ListDirection).%in che direzione deve andare Neo.
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+find_direction(Neo,Target,Rank_ListDirection):-
 	prendi_coord_attuali(Neo, X, Y),coord_goal(Target, X_goal, Y_goal),
 	OH_quad is (Y-Y_goal)^2,
 	TH_quad is (X-X_goal)^2,
@@ -60,8 +60,7 @@ find_direction(Neo,Target):-
 	adjust_goniometric_angle(Degree,Goniometric_Angle,X,Y,X_goal,Y_goal),
 	write('Angolazione del target rispetto me in RADIANTI: '),write(Angle_alpha),nl,
 	write('Angolazione del target rispetto me in GRADI: '),write(Goniometric_Angle),nl,
-	find_dir(Goniometric_Angle, Direction),
-	writeln(Direction).		
+	find_Sort_direction_List(Goniometric_Angle, Rank_ListDirection).
 
 convert(Degree,Radiants):-
 	Degree is ((Radiants * 180)/pi).
