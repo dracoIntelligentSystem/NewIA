@@ -22,10 +22,10 @@ numero_passi_x_step(smith1,1).
 numero_passi_effettuati(smith1,1).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 è_un(neo,eletto).
-id(neo,'O').
-coordX_attuale(neo,5).
+id(neo,'N').
+coordX_attuale(neo,8).
 coordY_attuale(neo,6).
-direzione(neo,Boh).
+%direzione(neo,Boh).
 numero_passi_x_step(neo,1).
 numero_passi_effettuati(neo,0).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -49,7 +49,7 @@ insert_theOneAndTarget(Matrix,Filled):-
 	id(target,IdTarget),
 	coord_goal(target, X_goal, Y_goal),
 	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled),%.
-	find_direction(Neo,target,Rank_ListDirection).%in che direzione deve andare Neo.
+	find_direction(Neo,target,[Primary_Direction|Ranked_Alternative_Direction]).
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 find_direction(Neo,Target,Rank_ListDirection):-
 	prendi_coord_attuali(Neo, X, Y),coord_goal(Target, X_goal, Y_goal),
@@ -58,8 +58,8 @@ find_direction(Neo,Target,Rank_ListDirection):-
 	Angle_alpha is acos(sqrt((OH_quad)/(OH_quad+TH_quad))),
 	convert(Degree,Angle_alpha),
 	adjust_goniometric_angle(Degree,Goniometric_Angle,X,Y,X_goal,Y_goal),
-	write('Angolazione del target rispetto me in RADIANTI: '),write(Angle_alpha),nl,
-	write('Angolazione del target rispetto me in GRADI: '),write(Goniometric_Angle),nl,
+	%write('Angolazione del target rispetto me in RADIANTI: '),write(Angle_alpha),nl,
+	%write('Angolazione del target rispetto me in GRADI: '),write(Goniometric_Angle),nl,
 	find_Sort_direction_List(Goniometric_Angle, Rank_ListDirection).
 
 convert(Degree,Radiants):-
@@ -68,6 +68,24 @@ convert(Degree,Radiants):-
 end_game(Neo,Target):- %CONDIZIONE DI FINE COMPUTAZIONE
 	prendi_coord_attuali(Neo, X, Y),
 	coord_goal(Target, X, Y).
+	
+raggiungi_traguardo(Final,Final):-end_game(neo,target),!.
+raggiungi_traguardo(NeoEnv,Final):-
+	find_direction(neo,target,RankListDirection),!,
+	muovi_eletto(NeoEnv,Final,RankListDirection).
+
+%muovi_eletto(_,_,_):-end_game(neo,target),!.	
+muovi_eletto(NeoEnv,Final,[[Primary_Direction|_]|Ranked_Alternative_Direction]):-
+	assert(direzione(neo, Primary_Direction)),
+	%ma_è_libera_la_cella(......),
+	%non_è_che_dopo_si_riempie(....). 
+	sposta(NeoEnv, neo, Final),
+	print_situation([neo], Final),
+	retract(direzione(neo,_)),!,
+	raggiungi_traguardo(Final, _);
+	retract(direzione(neo,_)),!,
+	muovi_eletto(NeoEnv,Final,Ranked_Alternative_Direction).
+	
 
 simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 	prendi_coord_attuali(Agente, I, J),
@@ -147,18 +165,18 @@ sort_move(Ambiente,AmbienteSimulato,[Agente|Restanti_Agenti],Parziale,Esegui):-
 	
 choiseBestMove(Ambiente,ListaAgenti,MigliorCombinazione):-
 	bagof(Combinazione, permutation(ListaAgenti, Combinazione), TutteLeCombinazioni),
-	writeln(ListaAgenti),
+	%writeln(ListaAgenti),
 	schedulazioneCombinazioni(Ambiente,TutteLeCombinazioni,[],MigliorCombinazione).
 
 schedulazioneCombinazioni(_,[],TheBest,TheBest):-!.
 schedulazioneCombinazioni(Ambiente,[Combinazione|Restanti_Combinazioni],PartialTheBest,TheBest):-
 	sort_move(Ambiente, [], Combinazione, [], RisultatoCombinazione),%%POTREBBE ESSERE PER IL FATTO CHE IL METODO SORT CAMBIA LA COMBINAZIONE ORIGINARIA CHE INTENDO COMPIERE
 	%RisultatoCombinazione mi restituisci CHI può muoversi, ma mi ha cambiato il QUANDO, INVERTENDOMI LA LISTA.
-	writeln('Migliore'),
+	%writeln('Migliore'),
 	%
 	length(RisultatoCombinazione, NumeroMosse),
 	length(PartialTheBest, AttualeMaggiorNumeroMosse),
 	NumeroMosse>=AttualeMaggiorNumeroMosse,!,
 	schedulazioneCombinazioni(Ambiente,Restanti_Combinazioni,RisultatoCombinazione,TheBest);
-	writeln('Nulla di fatto'),
+	%writeln('Nulla di fatto'),
 	schedulazioneCombinazioni(Ambiente,Restanti_Combinazioni,PartialTheBest,TheBest).
