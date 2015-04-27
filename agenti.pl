@@ -23,14 +23,14 @@ numero_passi_effettuati(smith1,1).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 è_un(neo,eletto).
 id(neo,'O').
-coordX_attuale(neo,10).
-coordY_attuale(neo,7).
+coordX_attuale(neo,5).
+coordY_attuale(neo,6).
 direzione(neo,Boh).
 numero_passi_x_step(neo,1).
 numero_passi_effettuati(neo,0).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 id(target,'T').
-coord_goal(target,1,10).
+coord_goal(target,1,9).
 
 inverti_direzione(Agente):-
 	%id(Agente,IdAgente),

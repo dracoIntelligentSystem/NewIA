@@ -48,7 +48,27 @@ insert_theOneAndTarget(Matrix,Filled):-
 	change_value_matrix(Matrix, X, Y, Id, WithNeo),
 	id(target,IdTarget),
 	coord_goal(target, X_goal, Y_goal),
-	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled).
+	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled),%.
+	find_direction(Neo,Target).%in che direzione deve andare Neo.
+	
+find_direction(Neo,Target):-
+	prendi_coord_attuali(Neo, X, Y),coord_goal(Target, X_goal, Y_goal),
+	OH_quad is (Y-Y_goal)^2,
+	TH_quad is (X-X_goal)^2,
+	Angle_alpha is acos(sqrt((OH_quad)/(OH_quad+TH_quad))),
+	convert(Degree,Angle_alpha),
+	adjust_goniometric_angle(Degree,Goniometric_Angle,X,Y,X_goal,Y_goal),
+	write('Angolazione del target rispetto me in RADIANTI: '),write(Angle_alpha),nl,
+	write('Angolazione del target rispetto me in GRADI: '),write(Goniometric_Angle),nl,
+	find_dir(Goniometric_Angle, Direction),
+	writeln(Direction).		
+
+convert(Degree,Radiants):-
+	Degree is ((Radiants * 180)/pi).
+	
+end_game(Neo,Target):- %CONDIZIONE DI FINE COMPUTAZIONE
+	prendi_coord_attuali(Neo, X, Y),
+	coord_goal(Target, X, Y).
 
 simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 	prendi_coord_attuali(Agente, I, J),
