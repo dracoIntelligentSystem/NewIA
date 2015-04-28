@@ -1,5 +1,4 @@
 library(lists).
-%:-([oneDirection]).
 make_dim_matrix(M,N,Matrix) :- make_matrix(M,N,Matrix).
 
 make_matrix(_, N, []) :- N =< 0, !.
@@ -14,6 +13,11 @@ make_list(N, ['0' | Rest]) :-
     N > 0,
     N2 is N - 1,!,
     make_list(N2, Rest).
+    
+estrai_dim(Matrice,M,N):-
+	length(Matrice,M),
+	nth1(1,Matrice,Riga),
+	length(Riga,N).
     
 update_on_file(NameFile,Matrix):- 
 	open(NameFile,append,Stream),
@@ -33,7 +37,14 @@ posizione_attuale_fw(Matrice,Agente,Row,I,J):-
 	NextRow is Row+1,
 	posizione_attuale_fw(Matrice,Agente,NextRow,I,J).
 
-insert_agents([],AgentEnv,AgentEnv):-!.
+nuova_posizione(I,J,Direction,Step,NewI,NewJ):-%FORSE MATRIX NON SERVE NEANCHE METTERLO
+	ambiente(Matrix),
+	estrai_dim(Matrix,M,N),
+	calculate_newCoord(I,J,Direction,Step,NewI,NewJ),
+	between(1,M,NewI),between(1,N,NewJ).
+	%write(NewI),write('X'),writeln(NewJ).
+
+insert_agents([],AgentEnv,EnviromentComplete):-insert_theOneAndTarget(AgentEnv,EnviromentComplete),!.
 insert_agents([Agente|Restanti_Agenti],Matrix,NewUp):-
 	è_un(Agente,agente),
 	prendi_coord_attuali(Agente, X, Y), 
@@ -48,8 +59,8 @@ insert_theOneAndTarget(Matrix,Filled):-
 	change_value_matrix(Matrix, X, Y, Id, WithNeo),
 	id(target,IdTarget),
 	coord_goal(target, X_goal, Y_goal),
-	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled),%.
-	find_direction(Neo,target,[Primary_Direction|Ranked_Alternative_Direction]).
+	change_value_matrix(WithNeo, X_goal, Y_goal, IdTarget, Filled).%.
+	%find_direction(Neo,target,[Primary_Direction|Ranked_Alternative_Direction]).
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 find_direction(Neo,Target,Rank_ListDirection):-
 	prendi_coord_attuali(Neo, X, Y),coord_goal(Target, X_goal, Y_goal),
@@ -74,20 +85,34 @@ raggiungi_traguardo(NeoEnv,Final):-
 	find_direction(neo,target,RankListDirection),!,
 	muovi_eletto(NeoEnv,Final,RankListDirection).
 
+%GESTIRE MOVIMENTO DELL'AGENTE SUCCESSIVO ALLA MIA MOSSA.
 %muovi_eletto(_,_,_):-end_game(neo,target),!.	
 muovi_eletto(NeoEnv,Final,[[Primary_Direction|_]|Ranked_Alternative_Direction]):-
 	assert(direzione(neo, Primary_Direction)),
-	%ma_è_libera_la_cella(......),%
-	simulazione_sposta_light(NeoEnv,neo,Scenario,neo),%%SI INTERROMPE XKè NON RIESCE A UNIFICARE CON LO 0
+	simulazione_sposta_light(NeoEnv,neo,Scenario,neo),%ma_è_libera_la_cella(......),%
 	%non_è_che_dopo_si_riempie(....).%muoviagentisinglestep(....) simulazione_sposta_light(NeoEnv,neo,MatrixUpdate,neo)
+	bagof(Agente,è_un(Agente,agente),ListaAgenti),
+	who_has2change_direction(ListaAgenti,[],AgentiDirCambiata),%SERVE SAPERE A QUALI AGENTI VA RESETTATA LA DIREZIONE
+	(	
+		choiseBestMove(Scenario,ListaAgenti,_BestMove),b_getval(neo_intercept, f),
+		reset_dir_agenti(AgentiDirCambiata);
+		b_setval(neo_intercept, f),
+		reset_dir_agenti(AgentiDirCambiata), 
+		false
+	),
 	sposta(NeoEnv, neo, Final),
-	print_situation([neo], Final),
+	%print_situation([neo], Final),
+	retract(direzione(neo,_)),!;
+	%write('Direzione PRESA: '),writeln(Primary_Direction),
+	%raggiungi_traguardo(Final, _),!;
+	%write('Direzione voluta: '),writeln(Primary_Direction),
 	retract(direzione(neo,_)),!,
-	raggiungi_traguardo(Final, _);
-	retract(direzione(neo,_)),!,
+	%print_situation([neo], NeoEnv),
 	muovi_eletto(NeoEnv,Final,Ranked_Alternative_Direction).
 	
-
+%INSERIRE IL CONTROLLO CHE NULLA E NESSUNO PUO' OLTREPASSARE LA MATRICE--FATTO, MA CHE SUCCEDE SE AVVIENE?
+%GESTIRE LE COLLISIONI OSTACOLI FISSI OSTACOLI MOBILI
+%GESTIRE LE COLLISIONI NEO MATRICE--FATTO.
 simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 	prendi_coord_attuali(Agente, I, J),
 	direzione(Agente,Direction),
@@ -97,8 +122,11 @@ simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 	posizione_attuale(Matrix,Id,I,J),
 	nuova_posizione(I,J,Direction,Step,NewI,NewJ),
 	posizione_attuale(Matrix,InfoPosizione,NewI,NewJ),%write(Agente),
-	(InfoPosizione='0';
-	Agente=neo,InfoPosizione='T'),
+	(
+		InfoPosizione='0';
+		InfoPosizione='N',b_setval(neo_intercept,t);
+		Agente=neo,InfoPosizione='T'
+	),
 	AgentedaInserire=Agente,
 	%
 	%isPossibleAdvance(Upd,NewI,NewJ,AgentedaInserire),
@@ -110,9 +138,9 @@ simulazione_sposta_light(Matrix,Agente,MatrixUpdate,AgentedaInserire):-
 %posizione_attuale(Matrice,Agente,I,J)
 
 sposta(Matrix,Agente,MatrixUpdate):-
-	numero_passi_effettuati(Agente,StepDone),
-	numero_passi_in_direz(Agente, Step2Do),
-	StepDone==Step2Do,fail,!;
+%	%numero_passi_effettuati(Agente,StepDone),
+%	%numero_passi_in_direz(Agente, Step2Do),
+%	%StepDone==Step2Do,fail,!;
 	prendi_coord_attuali(Agente, I, J),
 	change_value_matrix(Matrix,I,J,'0',Upd),
 	direzione(Agente, Direction),
@@ -126,35 +154,32 @@ sposta(Matrix,Agente,MatrixUpdate):-
 muovi_agenti_single_step([],Fin,Fin):-!.
 muovi_agenti_single_step([Agente|Restanti_Agenti],Matrix,NewUp):-
 	Agente=[],
-	%muovi_agenti_single_step(Restanti_Agenti,MatrixUpdate,NewUp);
 	muovi_agenti_single_step(Restanti_Agenti,Matrix,NewUp);
 	sposta(Matrix,Agente,MatrixUpdate),!,
 	muovi_agenti_single_step(Restanti_Agenti,MatrixUpdate,NewUp).
 	
-muovi_agenti(0,_,FinalMatrix,FinalMatrix):-!.	
-muovi_agenti(Counter,ListaAgenti,Matrix,Final):-%FORSE NON MI SERVE LA NOTAZIONE BASSA DI LISTA [Agente|Restanti_Agenti] -> PROVO UNA VARIABILE
+muovi_agenti(_,FinalMatrix,FinalMatrix):-end_game(neo,target),!.	
+muovi_agenti(ListaAgenti,Matrix,Final):-%FORSE NON MI SERVE LA NOTAZIONE BASSA DI LISTA [Agente|Restanti_Agenti] -> PROVO UNA VARIABILE
 	who_has2change_direction(ListaAgenti,[],_Consentiti),%se devono cambiare direzione LA CAMBIANO, NON MI INTERESSA SAPERE CHI L'HA CAMBIATA.
 	choiseBestMove(Matrix,ListaAgenti,BestMove),%to substitute SORTED with BESTMOVE
-	/*sort_move(Matrix,[],Consentiti,[],Sorted),%se la nuova posizione è occupata devi aspettare... è una simulazione di muovi_agenti_single_step
-	muovi_agenti_single_step(Sorted,Matrix,Upd),
-	print_situation(Sorted,Upd),
-	UpdCounter is Counter-1,!,
-	muovi_agenti(UpdCounter,Consentiti,Upd,Final).*/
 	muovi_agenti_single_step(BestMove,Matrix,Upd),%dopo di questo costruisci la virtualizzazione della matrice e ragiona sulle angolazioni dopodicchè decidi una direzione o meglio redigi una lista delle direzioni privilegiate
-	print_situation(BestMove,Upd),
-	UpdCounter is Counter-1,!,
-	muovi_agenti(UpdCounter,ListaAgenti,Upd,Final).
+	(%%COMMENTANDO QUESTA PARTE SI PUO FISSARE N E OSSERVARE IL COMPORTAMENTO DEGLI AGENTI
+		find_direction(neo,target,RankListDirection),!,
+		muovi_eletto(Upd,FinalStepMatrix,RankListDirection)
+	),
+	print_situation(BestMove,FinalStepMatrix),
+	muovi_agenti(ListaAgenti,FinalStepMatrix,Final).
 	
 who_has2change_direction([],Consentiti,Consentiti):-!.
 who_has2change_direction([Agente|Restanti],Parziale,Consentiti):-
 	numero_passi_effettuati(Agente, DoneStep),numero_passi_in_direz(Agente, DoneStep),!,
 	inverti_direzione(Agente),
 	who_has2change_direction(Restanti, [Agente|Parziale],Consentiti);
-	who_has2change_direction(Restanti, [Agente|Parziale],Consentiti).
+	who_has2change_direction(Restanti, Parziale,Consentiti).
 	
 print_situation(Consentiti,MatriceIntermedia):-
 	length(Consentiti, 0);
-	update_on_file('C:\\Copy\\eclipse\\workspace\\Sistema Esperto\\file.txt',MatriceIntermedia).
+	update_on_file('C:\\Copy\\eclipse\\workspace\\Copy of Sistema Esperto\\file.txt',MatriceIntermedia).
 	
 sort_move(_,_,[],Agenti_che_possono_muoversiBeta,Agenti_che_possono_muoversi):-reverse(Agenti_che_possono_muoversiBeta,Agenti_che_possono_muoversi),!.
 sort_move(Ambiente,AmbienteSimulato,[Agente|Restanti_Agenti],Parziale,Esegui):-

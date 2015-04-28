@@ -20,13 +20,13 @@ direction_from_degree(292.6,337.5,315,'SE').
 
 find_Sort_direction_List(Goniometric_Angle,Rank_Direction):-
 	find_alternative(Goniometric_Angle,['E','NE','N','NO','O','SO','S','SE'],AllDistanceDirection),
-	predsort(compareDistances, AllDistanceDirection, Rank_Direction).
+	predsort(compareDistances, AllDistanceDirection, Rank_Direction).%sto metodo fottuto mi elimina i duplicati
 	
 between_floatValue(MinValue,MaxValue,Value):-
 	Value>MinValue,
 	Value<MaxValue.
 	
-compareDistances(X,[_,Distance1],[_,Distance2]):-compare(X,Distance1,Distance2).
+compareDistances(X,[_,Distance1],[_,Distance2]):-Distance1==Distance2;compare(X,Distance1,Distance2).
 
 find_alternative(_,[],[]):-!.
 find_alternative(Goniometric_Angle,[Direction|Other_Direction],[[Direction,Distance]|Other_data]):-
